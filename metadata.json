@@ -1,0 +1,6 @@
+{
+  "name": "Mingəçevir Bələdiyyəsi",
+  "description": "Mingəçevir Bələdiyyəsinin rəsmi mobil tətbiqi - Xəbərlər, elanlar, elektron müraciətlər, vergi və ödənişlər, qaynar xətlər və əlaqə.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
