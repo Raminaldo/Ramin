@@ -155,26 +155,45 @@ fun MunicipalAppContent(
                     }
                     is AppScreen.AboutMunicipality -> {
                         AboutMunicipalityScreen(
+                            viewModel = viewModel,
                             onBack = { viewModel.navigateBack() }
                         )
                     }
                     is AppScreen.Hotlines -> {
                         HotlinesScreen(
+                            viewModel = viewModel,
                             onBack = { viewModel.navigateBack() }
                         )
                     }
                     is AppScreen.SocialMedia -> {
                         SocialMediaScreen(
+                            viewModel = viewModel,
                             onBack = { viewModel.navigateBack() }
                         )
                     }
                     is AppScreen.Documents -> {
                         AboutMunicipalityScreen(
+                            viewModel = viewModel,
                             onBack = { viewModel.navigateBack() }
                         )
                     }
                     is AppScreen.CivicSurveyScreen -> {
                         HomeScreen(uiState = uiState, viewModel = viewModel)
+                    }
+                    is AppScreen.AdminLogin -> {
+                        com.example.ui.screens.admin.AdminLoginScreen(
+                            onBack = { viewModel.navigateBack() },
+                            onLoginSuccess = { email ->
+                                viewModel.setAdminLoggedIn(true, email)
+                                viewModel.navigateTo(AppScreen.AdminDashboard)
+                            }
+                        )
+                    }
+                    is AppScreen.AdminDashboard -> {
+                        com.example.ui.screens.admin.AdminDashboardScreen(
+                            viewModel = viewModel,
+                            onBack = { viewModel.navigateBack() }
+                        )
                     }
                 }
             }

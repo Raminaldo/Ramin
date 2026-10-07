@@ -63,14 +63,34 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.model.MunicipalDocument
+import com.example.viewmodel.MunicipalViewModel
+import androidx.compose.runtime.collectAsState
 
 @Composable
 fun AboutMunicipalityScreen(
     onBack: () -> Unit,
+    viewModel: MunicipalViewModel? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     var selectedDoc by remember { mutableStateOf<MunicipalDocument?>(null) }
+    
+    val firestoreGenInfo by viewModel?.firestoreGeneralInfo?.collectAsState() ?: remember { mutableStateOf(null) }
+    val firestoreReceptionsList by viewModel?.firestoreReceptions?.collectAsState() ?: remember { mutableStateOf(emptyList()) }
+
+    val aboutTitle = firestoreGenInfo?.title?.ifEmpty { null } ?: "MİNGƏÇEVİR BƏLƏDİYYƏSİ"
+    val aboutText = firestoreGenInfo?.aboutText?.ifEmpty { null }
+        ?: "Mingəçevir Bələdiyyəsi Azərbaycan Respublikasının Konstitusiyası və 'Bələdiyyələrin statusu haqqında' Qanununa uyğun olaraq fəaliyyət göstərən yerli özünüidarəetmə orqanıdır. Əsas missiyamız şəhərin sosial-iqtisadi inkişafını təmin etmək, ətraf mühiti qorumaq, abadlıq işlərini genişləndirmək və sakinlərə keyfiyyətli xidmət göstərməkdir."
+
+    // Receptions list with fallback
+    val officials: List<OfficialPerson> = remember(firestoreReceptionsList) {
+        val active = firestoreReceptionsList.filter { it.isActive }.sortedBy { it.order }
+        if (active.isNotEmpty()) {
+            active.map { it.toOfficialPerson() }
+        } else {
+            MunicipalDataProvider.officialsList
+        }
+    }
 
     selectedDoc?.let { doc ->
         AlertDialog(
@@ -192,7 +212,7 @@ fun AboutMunicipalityScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "MİNGƏÇEVİR BƏLƏDİYYƏSİ",
+                        text = aboutTitle,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -209,7 +229,7 @@ fun AboutMunicipalityScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
-                        text = "Mingəçevir Bələdiyyəsi Azərbaycan Respublikasının Konstitusiyası və 'Bələdiyyələrin statusu haqqında' Qanununa uyğun olaraq fəaliyyət göstərən yerli özünüidarəetmə orqanıdır. Əsas missiyamız şəhərin sosial-iqtisadi inkişafını təmin etmək, ətraf mühiti qorumaq, abadlıq işlərini genişləndirmək və sakinlərə keyfiyyətli xidmət göstərməkdir.",
+                        text = aboutText,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             lineHeight = 22.sp,
                             color = MaterialTheme.colorScheme.onSurface
@@ -232,7 +252,7 @@ fun AboutMunicipalityScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            MunicipalDataProvider.officialsList.forEach { official ->
+            officials.forEach { official ->
                 OfficialPersonCard(official = official, context = context)
                 Spacer(modifier = Modifier.height(10.dp))
             }

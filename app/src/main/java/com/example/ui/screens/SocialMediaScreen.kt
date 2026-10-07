@@ -32,6 +32,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,14 +45,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.MunicipalDataProvider
 import com.example.model.SocialChannel
+import com.example.viewmodel.MunicipalViewModel
 
 @Composable
 fun SocialMediaScreen(
     onBack: () -> Unit,
+    viewModel: MunicipalViewModel? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val channels = MunicipalDataProvider.socialChannels
+    val firestoreList by viewModel?.firestoreSocialMedia?.collectAsState() ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(emptyList()) }
+    
+    // Use Firestore real-time data if present, otherwise gracefully fallback to MunicipalDataProvider.socialChannels
+    val channels: List<SocialChannel> = remember(firestoreList) {
+        val activeFromFirestore = firestoreList.filter { it.isActive }.sortedBy { it.order }
+        if (activeFromFirestore.isNotEmpty()) {
+            activeFromFirestore.map { it.toSocialChannel() }
+        } else {
+            MunicipalDataProvider.socialChannels
+        }
+    }
 
     Column(
         modifier = modifier
@@ -128,11 +143,15 @@ fun SocialChannelCard(
     channel: SocialChannel,
     onOpen: () -> Unit
 ) {
-    val brandColor = when (channel.name) {
-        "Facebook" -> Color(0xFF1877F2)
-        "Instagram" -> Color(0xFFE4405F)
-        "Telegram" -> Color(0xFF229ED9)
-        "YouTube" -> Color(0xFFFF0000)
+    val key = channel.iconType.lowercase().ifEmpty { channel.name.lowercase() }
+    val brandColor = when {
+        key.contains("facebook") -> Color(0xFF1877F2)
+        key.contains("instagram") -> Color(0xFFE4405F)
+        key.contains("telegram") -> Color(0xFF229ED9)
+        key.contains("youtube") -> Color(0xFFFF0000)
+        key.contains("twitter") || key.contains("x") -> Color(0xFF1DA1F2)
+        key.contains("linkedin") -> Color(0xFF0A66C2)
+        key.contains("tiktok") -> Color(0xFF000000)
         else -> MaterialTheme.colorScheme.primary
     }
 

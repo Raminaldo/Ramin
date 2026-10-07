@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.ContactPhone
@@ -122,6 +123,19 @@ fun MenuScreen(
             icon = Icons.Default.ContactPhone,
             onClick = { viewModel.selectTab(BottomNavTab.CONTACT) },
             testTag = "menu_item_contact"
+        ),
+        MenuItemSpec(
+            title = "İnzibatçı Paneli (Admin Girişi)",
+            subtitle = "Dinamik məzmun, xəbərlər, qaynar xətlər və idarəetmə",
+            icon = Icons.Default.AdminPanelSettings,
+            onClick = {
+                if (viewModel.uiState.value.isAdminLoggedIn) {
+                    viewModel.navigateTo(AppScreen.AdminDashboard)
+                } else {
+                    viewModel.navigateTo(AppScreen.AdminLogin)
+                }
+            },
+            testTag = "menu_item_admin"
         )
     )
 

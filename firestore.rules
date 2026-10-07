@@ -1,0 +1,169 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Security Helpers
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrapAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "ehmedovramin646@gmail.com" ||
+        request.auth.token.email == "ehmedovramin646@googlemail.com"
+      );
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        isBootstrapAdmin() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Entity Validation Helpers
+    function isValidNews(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 300 &&
+             data.summary is string && data.summary.size() <= 1000 &&
+             data.content is string && data.content.size() <= 20000 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.date is string && data.date.size() <= 50 &&
+             data.isActive is bool &&
+             (!('imageUrl' in data) || data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 1000));
+    }
+
+    function isValidAnnouncement(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 300 &&
+             data.description is string && data.description.size() <= 5000 &&
+             data.date is string && data.date.size() <= 50 &&
+             data.type is string && data.type.size() <= 100 &&
+             data.priority is string && data.priority.size() <= 50 &&
+             data.isActive is bool;
+    }
+
+    function isValidHotline(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.number is string && data.number.size() > 0 && data.number.size() <= 50 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.order is int &&
+             data.isActive is bool &&
+             (!('description' in data) || data.description == null || (data.description is string && data.description.size() <= 500));
+    }
+
+    function isValidSocialMedia(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 100 &&
+             data.platform is string && data.platform.size() <= 50 &&
+             data.url is string && data.url.size() <= 500 &&
+             data.order is int &&
+             data.isActive is bool &&
+             (!('handle' in data) || data.handle == null || (data.handle is string && data.handle.size() <= 100));
+    }
+
+    function isValidReception(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.person is string && data.person.size() <= 200 &&
+             data.position is string && data.position.size() <= 200 &&
+             data.schedule is string && data.schedule.size() <= 300 &&
+             data.order is int &&
+             data.isActive is bool &&
+             (!('location' in data) || data.location == null || (data.location is string && data.location.size() <= 300)) &&
+             (!('contact' in data) || data.contact == null || (data.contact is string && data.contact.size() <= 100));
+    }
+
+    function isValidGeneralInfo(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.aboutText is string && data.aboutText.size() <= 10000 &&
+             data.address is string && data.address.size() <= 300 &&
+             data.phone is string && data.phone.size() <= 100 &&
+             data.email is string && data.email.size() <= 100 &&
+             data.workHours is string && data.workHours.size() <= 200 &&
+             (!('chairman' in data) || data.chairman == null || (data.chairman is string && data.chairman.size() <= 200));
+    }
+
+    function isValidAdminUser(data) {
+      return data.uid is string && data.uid.size() <= 128 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.role is string && data.role == "admin";
+    }
+
+    // News Collection
+    match /news/{newsId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && isValidId(newsId) && isValidNews(incoming());
+      allow update: if isAdmin() && isValidId(newsId) && isValidNews(incoming());
+      allow delete: if isAdmin() && isValidId(newsId);
+    }
+
+    // Announcements Collection
+    match /announcements/{announcementId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && isValidId(announcementId) && isValidAnnouncement(incoming());
+      allow update: if isAdmin() && isValidId(announcementId) && isValidAnnouncement(incoming());
+      allow delete: if isAdmin() && isValidId(announcementId);
+    }
+
+    // Hotlines Collection
+    match /hotlines/{hotlineId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && isValidId(hotlineId) && isValidHotline(incoming());
+      allow update: if isAdmin() && isValidId(hotlineId) && isValidHotline(incoming());
+      allow delete: if isAdmin() && isValidId(hotlineId);
+    }
+
+    // Social Media Collection
+    match /social_media/{socialId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && isValidId(socialId) && isValidSocialMedia(incoming());
+      allow update: if isAdmin() && isValidId(socialId) && isValidSocialMedia(incoming());
+      allow delete: if isAdmin() && isValidId(socialId);
+    }
+
+    // Citizen Receptions Collection
+    match /receptions/{receptionId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && isValidId(receptionId) && isValidReception(incoming());
+      allow update: if isAdmin() && isValidId(receptionId) && isValidReception(incoming());
+      allow delete: if isAdmin() && isValidId(receptionId);
+    }
+
+    // General Information Collection
+    match /general_info/{infoId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && isValidId(infoId) && isValidGeneralInfo(incoming());
+      allow update: if isAdmin() && isValidId(infoId) && isValidGeneralInfo(incoming());
+      allow delete: if isAdmin() && isValidId(infoId);
+    }
+
+    // Admins Collection
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isValidId(adminId) && isValidAdminUser(incoming()) && (
+        isAdmin() && incoming().uid == adminId
+      );
+      allow update, delete: if isAdmin() && isValidId(adminId) && isValidAdminUser(incoming());
+    }
+  }
+}

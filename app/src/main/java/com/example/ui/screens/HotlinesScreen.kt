@@ -36,6 +36,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,14 +49,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.MunicipalDataProvider
 import com.example.model.Hotline
+import com.example.viewmodel.MunicipalViewModel
 
 @Composable
 fun HotlinesScreen(
     onBack: () -> Unit,
+    viewModel: MunicipalViewModel? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val hotlines = MunicipalDataProvider.hotlinesList
+    val firestoreList by viewModel?.firestoreHotlines?.collectAsState() ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(emptyList()) }
+    
+    // Real-time Firestore hotlines with fallback to static hotlines list
+    val hotlines: List<Hotline> = remember(firestoreList) {
+        val activeFromFirestore = firestoreList.filter { it.isActive }.sortedBy { it.order }
+        if (activeFromFirestore.isNotEmpty()) {
+            activeFromFirestore.map { it.toHotline() }
+        } else {
+            MunicipalDataProvider.hotlinesList
+        }
+    }
 
     Column(
         modifier = modifier

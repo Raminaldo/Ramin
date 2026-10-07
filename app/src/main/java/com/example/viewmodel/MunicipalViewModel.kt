@@ -1,14 +1,26 @@
 package com.example.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.data.MunicipalDataProvider
+import com.example.data.firestore.FirestoreAnnouncement
+import com.example.data.firestore.FirestoreGeneralInfo
+import com.example.data.firestore.FirestoreHotline
+import com.example.data.firestore.FirestoreNews
+import com.example.data.firestore.FirestoreReception
+import com.example.data.firestore.FirestoreSocialMedia
+import com.example.data.firestore.MunicipalFirestoreRepository
 import com.example.model.AnnouncementItem
 import com.example.model.Appeal
 import com.example.model.CivicSurvey
 import com.example.model.NewsItem
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -34,6 +46,8 @@ sealed interface AppScreen {
     object SocialMedia : AppScreen
     object Documents : AppScreen
     object CivicSurveyScreen : AppScreen
+    object AdminLogin : AppScreen
+    object AdminDashboard : AppScreen
 }
 
 data class UiNotification(
@@ -93,13 +107,85 @@ data class MunicipalUiState(
     val formSubject: String = "",
     val formDescription: String = "",
     val formSubmittedSuccessCode: String? = null,
-    val formError: String? = null
+    val formError: String? = null,
+    val isAdminLoggedIn: Boolean = false,
+    val adminEmail: String? = null
 )
 
-class MunicipalViewModel : ViewModel() {
+class MunicipalViewModel(
+    private val repository: MunicipalFirestoreRepository? = try {
+        MunicipalFirestoreRepository("ai-studio-android-ramin-757d221e-3144-42cb-a0c8-fc52d2b6ce0e")
+    } catch (e: Exception) {
+        null
+    }
+) : androidx.lifecycle.ViewModel() {
+
+    val firestoreNews: StateFlow<List<FirestoreNews>> = repository?.observeNews()
+        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        ?: MutableStateFlow(emptyList())
+
+    val firestoreAnnouncements: StateFlow<List<FirestoreAnnouncement>> = repository?.observeAnnouncements()
+        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        ?: MutableStateFlow(emptyList())
+
+    val firestoreHotlines: StateFlow<List<FirestoreHotline>> = repository?.observeHotlines()
+        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        ?: MutableStateFlow(emptyList())
+
+    val firestoreSocialMedia: StateFlow<List<FirestoreSocialMedia>> = repository?.observeSocialMedia()
+        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        ?: MutableStateFlow(emptyList())
+
+    val firestoreReceptions: StateFlow<List<FirestoreReception>> = repository?.observeReceptions()
+        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        ?: MutableStateFlow(emptyList())
+
+    val firestoreGeneralInfo: StateFlow<FirestoreGeneralInfo?> = repository?.observeGeneralInfo()
+        ?.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        ?: MutableStateFlow(null)
 
     private val _uiState = MutableStateFlow(MunicipalUiState())
     val uiState: StateFlow<MunicipalUiState> = _uiState.asStateFlow()
+
+    init {
+        repository?.let {
+            viewModelScope.launch {
+                firestoreNews.collect { list ->
+                    if (list.isNotEmpty()) {
+                        _uiState.value = _uiState.value.copy(
+                            newsList = list.filter { it.isActive }.map { it.toNewsItem() }
+                        )
+                    }
+                }
+            }
+            viewModelScope.launch {
+                firestoreAnnouncements.collect { list ->
+                    if (list.isNotEmpty()) {
+                        _uiState.value = _uiState.value.copy(
+                            announcementsList = list.filter { it.isActive }.map { it.toAnnouncementItem() }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun setAdminLoggedIn(loggedIn: Boolean, email: String? = null) {
+        _uiState.value = _uiState.value.copy(isAdminLoggedIn = loggedIn, adminEmail = email)
+    }
+
+    suspend fun saveNews(news: FirestoreNews) = repository?.saveNews(news) ?: Result.success(Unit)
+    suspend fun deleteNews(id: String) = repository?.deleteNews(id) ?: Result.success(Unit)
+    suspend fun saveAnnouncement(ann: FirestoreAnnouncement) = repository?.saveAnnouncement(ann) ?: Result.success(Unit)
+    suspend fun deleteAnnouncement(id: String) = repository?.deleteAnnouncement(id) ?: Result.success(Unit)
+    suspend fun saveHotline(hotline: FirestoreHotline) = repository?.saveHotline(hotline) ?: Result.success(Unit)
+    suspend fun deleteHotline(id: String) = repository?.deleteHotline(id) ?: Result.success(Unit)
+    suspend fun saveSocialMedia(social: FirestoreSocialMedia) = repository?.saveSocialMedia(social) ?: Result.success(Unit)
+    suspend fun deleteSocialMedia(id: String) = repository?.deleteSocialMedia(id) ?: Result.success(Unit)
+    suspend fun saveReception(reception: FirestoreReception) = repository?.saveReception(reception) ?: Result.success(Unit)
+    suspend fun deleteReception(id: String) = repository?.deleteReception(id) ?: Result.success(Unit)
+    suspend fun saveGeneralInfo(info: FirestoreGeneralInfo) = repository?.saveGeneralInfo(info) ?: Result.success(Unit)
+    suspend fun seedFirestoreInitialData() = repository?.seedInitialData() ?: Result.success(0)
 
     fun selectTab(tab: BottomNavTab) {
         _uiState.value = _uiState.value.copy(

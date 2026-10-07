@@ -1,0 +1,152 @@
+{
+  "entities": {
+    "News": {
+      "title": "News",
+      "description": "Municipal news articles",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "date": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "summary", "content", "category", "date", "isActive"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Public announcements and notices",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string" },
+        "type": { "type": "string" },
+        "priority": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "description", "date", "type", "priority", "isActive"]
+    },
+    "Hotline": {
+      "title": "Hotline",
+      "description": "Emergency and municipal hotlines",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "number": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "order": { "type": "integer" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "number", "category", "order", "isActive"]
+    },
+    "SocialMedia": {
+      "title": "SocialMedia",
+      "description": "Official municipal social media accounts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "platform": { "type": "string" },
+        "url": { "type": "string" },
+        "handle": { "type": "string" },
+        "order": { "type": "integer" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "platform", "url", "order", "isActive"]
+    },
+    "Reception": {
+      "title": "Reception",
+      "description": "Citizens reception and meeting schedules",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "person": { "type": "string" },
+        "position": { "type": "string" },
+        "schedule": { "type": "string" },
+        "location": { "type": "string" },
+        "contact": { "type": "string" },
+        "order": { "type": "integer" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "person", "position", "schedule", "order", "isActive"]
+    },
+    "GeneralInfo": {
+      "title": "GeneralInfo",
+      "description": "General municipality contact, about and working info",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "aboutText": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "workHours": { "type": "string" },
+        "chairman": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "aboutText", "address", "phone", "email", "workHours"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized municipality admin accounts",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/news/{newsId}": {
+      "schema": "News",
+      "description": "Municipal news items collection"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "Public announcements collection"
+    },
+    "/hotlines/{hotlineId}": {
+      "schema": "Hotline",
+      "description": "Emergency and department hotlines collection"
+    },
+    "/social_media/{socialId}": {
+      "schema": "SocialMedia",
+      "description": "Official social media links collection"
+    },
+    "/receptions/{receptionId}": {
+      "schema": "Reception",
+      "description": "Citizen meetings and reception schedule collection"
+    },
+    "/general_info/{infoId}": {
+      "schema": "GeneralInfo",
+      "description": "Municipality general information document collection"
+    },
+    "/admins/{adminId}": {
+      "schema": "AdminUser",
+      "description": "Authorized admin users collection"
+    }
+  }
+}
